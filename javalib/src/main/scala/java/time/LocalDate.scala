@@ -332,18 +332,22 @@ final class LocalDate private (year: Int, month: Month, dayOfMonth: Int)
   // def format(formatter: java.time.format.DateTimeFormatter): String
 
   // TODO
-  // def atTime(time: LocalTime): LocalDateTime
-  // def atTime(hour: Int, minute: Int): LocalDateTime
-  // def atTime(hour: Int, minute: Int, second: Int): LocalDateTime
-  // def atTime(hour: Int, minute: Int, second: Int, nanoOfSecond: Int):
-  //     LocalDateTime
+  def atTime(time: LocalTime): LocalDateTime = LocalDateTime.of(this, time)
+
+  def atTime(hour: Int, minute: Int): LocalDateTime = LocalDateTime.of(this, LocalTime.of(hour, minute))
+
+  def atTime(hour: Int, minute: Int, second: Int): LocalDateTime =
+    LocalDateTime.of(this, LocalTime.of(hour, minute, second))
+
+  def atTime(hour: Int, minute: Int, second: Int, nanoOfSecond: Int): LocalDateTime =
+    LocalDateTime.of(this, LocalTime.of(hour, minute, second, nanoOfSecond))
 
   // Not implemented
   // def atTime(time: OffsetTime): OffsetDateTime
 
 
   // TODO
-  // def atStartOfDay(): LocalDateTime
+  def atStartOfDay(): LocalDateTime = LocalDateTime.of(this, LocalTime.MIDNIGHT)
 
   // Not implemented
   // def atStartOfDay(id: ZoneId): ZonedDateTime

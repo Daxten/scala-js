@@ -2,7 +2,7 @@ package java.time.chrono
 
 import scala.collection.JavaConverters._
 
-import java.time.{Period, LocalDate}
+import java.time.{LocalTime, LocalDateTime, Period, LocalDate}
 import java.time.temporal.{ValueRange, ChronoField, TemporalAccessor}
 import java.{util => ju}
 
@@ -28,7 +28,7 @@ final class IsoChronology private () extends AbstractChronology with Serializabl
   def date(temporal: TemporalAccessor): LocalDate = LocalDate.from(temporal)
 
   // TODO
-  // def localDateTime(temporal: TemporalAccessor): LocalDateTime
+  def localDateTime(temporal: TemporalAccessor): LocalDateTime = date(temporal).atTime(LocalTime.from(temporal))
 
   // Not implemented
   // def zonedDateTime(temporal: TemporalAccessor): ZonedDateTime

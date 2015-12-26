@@ -1,22 +1,15 @@
 package java.time
 
 import java.time.LocalTime._
-import java.time.chrono
+import java.time.chrono.{ChronoLocalDate, ChronoLocalDateTime}
 import java.time.temporal._
-import java.util.Objects
-import scala.util.Try
-import java.time.chrono.{ChronoLocalDateTime, ChronoLocalDate}
 
 final class LocalDateTime private(date: LocalDate, time: LocalTime)
-  extends Temporal with TemporalAdjuster with Comparable[LocalDateTime] with java.io.Serializable {
+  extends ChronoLocalDateTime[LocalDate] {
 
   import java.time.temporal.ChronoUnit._
-  import java.time.temporal.ChronoField._
 
-  override def adjustInto(temporal: Temporal): Temporal =
-    temporal
-      .`with`(EPOCH_DAY, date.toEpochDay)
-      .`with`(NANO_OF_DAY, time.toNanoOfDay)
+  // override def adjustInto(temporal: Temporal): Temporal
 
   // def atOffset(offset: ZoneOffset): OffsetDateTime = ???
 
@@ -24,10 +17,10 @@ final class LocalDateTime private(date: LocalDate, time: LocalTime)
 
   // def format(formatter: DateTimeFormatter) = ???
 
-  def get(field: TemporalField) = field match {
+  override def get(field: TemporalField): Int  = field match {
     case chronoField: ChronoField =>
       if (chronoField.isDateBased) date.get(field) else time.get(field)
-    case _ => ChronoLocalDate.super.get(field)
+    case _ => ???
   }
 
   def getDayOfMonth(): Int = date.getDayOfMonth
@@ -54,20 +47,24 @@ final class LocalDateTime private(date: LocalDate, time: LocalTime)
 
   def getYear(): Int = date.getYear
 
-  def isAfter(other: ChronoLocalDateTime): Boolean = {
-    val otherDate = other.toLocalDate
-    if (date.isEqual(other.toLocalDate)) time.isAfter(other.toLocalTime)
-    else date.isAfter(otherDate)
+  override def isAfter(other: ChronoLocalDateTime[_]): Boolean = {
+    other match {
+      case localDateTime: LocalDateTime => compareTo(localDateTime) > 0
+      case _ => super.isAfter(other)
+    }
   }
 
-  def isBefore(other: ChronoLocalDateTime): Boolean = {
-    val otherDate = other.toLocalDate
-    if (date.isEqual(otherDate)) time.isBefore(other.toLocalTime)
-    else date.isBefore(otherDate)
+  override def isBefore(other: ChronoLocalDateTime[_]): Boolean = {
+    other match {
+      case localDateTime: LocalDateTime => compareTo(localDateTime) < 0
+      case _ => super.isAfter(other)
+    }
   }
 
-  def isEqual(other: ChronoLocalDateTime): Boolean =
-    date.isEqual(other.toLocalDate) && time.equals(other.toLocalTime)
+  override def isEqual(other: ChronoLocalDateTime[_]): Boolean =    other match {
+    case localDateTime: LocalDateTime => compareTo(localDateTime) == 0
+    case _ => super.isEqual(other)
+  }
 
   def isSupported(field: TemporalField): Boolean = field match {
     case _: ChronoField => field.isTimeBased || field.isDateBased
@@ -75,15 +72,13 @@ final class LocalDateTime private(date: LocalDate, time: LocalTime)
     case _ => field.isSupportedBy(this)
   }
 
-  def isSupported(unit: TemporalUnit): Boolean = unit match {
-    case _: ChronoUnit => unit.isTimeBased || unit.isDateBased
-    case null => false
-    case _ => unit.isSupportedBy(this)
-  }
 
-  def minus(amountToSubtract: Long, unit: TemporalUnit): LocalDateTime = plus(-amountToSubtract, unit)
+  // implemented by ChronoLocalDateTime
+  // def isSupported(unit: TemporalUnit): Boolean
 
-  def minus(amountToSubtract: TemporalAmount): LocalDateTime = amountToSubtract match {
+  override def minus(amountToSubtract: Long, unit: TemporalUnit): LocalDateTime = plus(-amountToSubtract, unit)
+
+  override def minus(amountToSubtract: TemporalAmount): LocalDateTime = amountToSubtract match {
     case period: Period => `with`(date.minus(period), time)
     case _ => amountToSubtract.subtractFrom(this).asInstanceOf[LocalDateTime]
   }
@@ -123,7 +118,7 @@ final class LocalDateTime private(date: LocalDate, time: LocalTime)
     }
   }
 
-  def plus(amountToAdd: TemporalAmount): LocalDateTime = amountToAdd match {
+  override def plus(amountToAdd: TemporalAmount): LocalDateTime = amountToAdd match {
     case period: Period => `with`(date.plus(period), time)
     case _ => amountToAdd.subtractFrom(this).asInstanceOf[LocalDateTime]
   }
@@ -172,7 +167,7 @@ final class LocalDateTime private(date: LocalDate, time: LocalTime)
 
   def plusYears(years: Long): LocalDateTime = `with`(date.plusYears(years), time)
 
-  def range(field: TemporalField): ValueRange = field match {
+  override def range(field: TemporalField): ValueRange = field match {
     case chronoField: ChronoField => if (chronoField.isDateBased) date.range(chronoField) else time.range(chronoField)
     case _ => field.rangeRefinedBy(this)
   }
@@ -183,8 +178,8 @@ final class LocalDateTime private(date: LocalDate, time: LocalTime)
 
   override def toString(): String = date.toString + "T" + time.toString
 
-  override def compareTo(o: LocalDateTime): Int = {
-    val dateCompare = date.compareTo(o.toLocalDate)
+  def compareTo(o: LocalDateTime): Int = {
+    val dateCompare = date.compareTo(o.toLocalDate())
     if (dateCompare == 0) time.compareTo(o.toLocalTime)
     else dateCompare
   }
@@ -194,7 +189,7 @@ final class LocalDateTime private(date: LocalDate, time: LocalTime)
   override def until(endExclusive: Temporal, unit: TemporalUnit): Long =
     unit.between(this, LocalDateTime.from(endExclusive))
 
-  override def `with`(field: TemporalField, newValue: Long): Temporal =
+  override def `with`(field: TemporalField, newValue: Long): LocalDateTime =
     if (field.isDateBased) `with`(date.`with`(field, newValue), time)
     else `with`(date, time.`with`(field, newValue))
 
